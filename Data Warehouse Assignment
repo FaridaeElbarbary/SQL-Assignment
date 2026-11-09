@@ -1,0 +1,79 @@
+# Data Warehouse Assignment Solution
+
+---
+
+# Case Study 1: Retail Company (Restaurant)
+
+## 1. Dimensional Modeling Process (Kimball's 4 Steps)
+
+### Step 1: Choose the Business Process
+The business objective is to track the restaurant’s sales operations, revenue, store costs, menu management, and HR staffing levels to support the restaurant's expansion strategy.
+
+### Step 2: Declare the Grain
+We define two grains across two fact tables to handle both daily sales and store-level periodic metrics:
+* **Sales Transaction Grain:** One row per product item sold in an order (transaction line-item).
+* **Periodic Store Operations Grain:** One row per branch per month for HR headcount and active product menu variety.
+
+### Step 3: Identify Dimensions
+Based on the restaurant requirements, we build the following dimension tables:
+* `Dim_Date`: Time breakdown (Day, Month, Quarter, Year, Day of week).
+* `Dim_Location`: Store hierarchy (Region, Governorate, Branch Name).
+* `Dim_Product`: Item details (Product Name, Category/Type like Pizzas, Sandwiches, Drinks, Unit Cost, Unit Price).
+* `Dim_Waiter`: Staff info (Waiter Name, Assigned Branch).
+* `Dim_Sales_Type`: Order channel (Delivery, Dine-in, Take-away).
+
+### Step 4: Identify Facts (Metrics)
+* **Fact Sales Metrics:** `Quantity_Sold`, `Sales_Amount`, `Cost_Amount`, `Net_Revenue`.
+* **Fact Operations Metrics:** `HR_Head_Count`, `Product_Variety_Count`.
+
+---
+
+## 2. Schema Selection
+
+We choose a **Galaxy Schema (Fact Constellation Schema)**.
+
+**Reason:**  
+Because we need to track transactional sales data alongside periodic store metrics (HR staff numbers and menu variety). Combining both into a single fact table would create data redundancy and granularity conflicts. So using two fact tables (`Fact_Sales` and `Fact_Store_Operations`) that share common dimensions (`Dim_Date` and `Dim_Location`) is the correct architecture.
+
+---
+
+## 3. Data Warehouse Schema Design
+
+### Dimension Tables
+
+```sql
+Dim_Date (
+    Date_Key INT PRIMARY KEY,
+    Full_Date DATE,
+    Day INT,
+    Month INT,
+    Quarter VARCHAR(5),
+    Year INT,
+    Day_Of_Week VARCHAR(15)
+)
+
+Dim_Location (
+    Location_Key INT PRIMARY KEY,
+    Branch_Name VARCHAR(100),
+    Governorate VARCHAR(100),
+    Region VARCHAR(100)
+)
+
+Dim_Product (
+    Product_Key INT PRIMARY KEY,
+    Product_Name VARCHAR(100),
+    Category_Type VARCHAR(50), -- Pizzas, Sandwiches, Drinks, Main-course
+    Unit_Cost DECIMAL(10,2),
+    Unit_Price DECIMAL(10,2)
+)
+
+Dim_Waiter (
+    Waiter_Key INT PRIMARY KEY,
+    Waiter_Name VARCHAR(100),
+    Branch_Name VARCHAR(100)
+)
+
+Dim_Sales_Type (
+    Sales_Type_Key INT PRIMARY KEY,
+    Sales_Type_Name VARCHAR(50) -- Delivery, Dine-in, Take-away
+)
